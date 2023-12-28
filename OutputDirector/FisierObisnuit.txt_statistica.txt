@@ -1,0 +1,8 @@
+nume fisier: Director/FisierObisnuit.txt
+dimensiune: 91
+identificatorul utilizatorului: 2053
+timpul ultimei modificari: 2023-12-06 14:34:09
+contorul de legaturi: 1
+drepturi de acces user: rw- 
+drepturi de acces grup: rw- 
+drepturi de acces altii: r-- 

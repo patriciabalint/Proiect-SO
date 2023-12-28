@@ -1,0 +1,5 @@
+nume fisier: Director/..
+identificatorul utilizatorului: 2053
+drepturi de acces user: rwx 
+drepturi de acces grup: rwx 
+drepturi de acces altii: r-x 

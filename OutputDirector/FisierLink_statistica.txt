@@ -1,0 +1,6 @@
+nume fisier: Director/FisierLink
+dimensiune: 18
+Fisier target: dimensiune: 91
+drepturi de acces user: rwx 
+drepturi de acces grup: rwx 
+drepturi de acces altii: rwx 

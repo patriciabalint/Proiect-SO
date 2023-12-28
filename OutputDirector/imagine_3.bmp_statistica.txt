@@ -1,0 +1,10 @@
+nume fisier: Director/imagine_3.bmp
+inaltime: 256
+lungime: 256
+dimensiune: 196666
+identificatorul utilizatorului: 2053
+timpul ultimei modificari: 2023-11-17 09:41:22
+contorul de legaturi: 1
+drepturi de acces user: rw- 
+drepturi de acces grup: rw- 
+drepturi de acces altii: r-- 
