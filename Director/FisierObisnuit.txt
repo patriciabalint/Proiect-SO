@@ -1,0 +1,1 @@
+Fișierul obișnuit fără extensia .bmp ar trebui să includă numele și dimensiunea sa.
