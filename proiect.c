@@ -14,25 +14,21 @@
 #include <math.h>
 
 #define BUFFSIZE 512
-#define LIMITPROCESS 100
 
-
-void checkNrOfArguments(int number0fArguments){
-  if(number0fArguments != 3){
-    perror("You must provide only two arguments!");
+void verificaNrArg(int nrArg){
+  if(nrArg != 4){
+    perror("Trebuie să furnizați doar două argumente!");
     exit(10);
   }
 }
 
-struct stat getFileInfo(char* filePath, struct stat file_info){
+struct stat getInfoFisier(char* filePath, struct stat file_info){
   if(lstat(filePath, &file_info) != 0){
-    perror("Can't get info about the provided file!!");
+    perror("Nu pot obține informații despre fișierul furnizat!");
     exit(11);
   }
   return file_info;
 }
-
-//
 
 int isBMP(int fin){
   off_t offset = 0;
@@ -44,7 +40,7 @@ int isBMP(int fin){
     else return 0;
 }
 
-int getFileType(mode_t sMode, int fin){
+int getTipFisier(mode_t sMode, int fin){
   if(isBMP(fin)){
     return 1;
   }
@@ -60,9 +56,8 @@ int getFileType(mode_t sMode, int fin){
   return 4;
 }
 
-//
 
-int tryToOpenFile(char* filePath){
+int deschidereFisier(char* filePath){
   int fin;
   if((fin = open(filePath, O_RDONLY)) < 0){
     perror("Input file can not be opened!");
@@ -71,19 +66,19 @@ int tryToOpenFile(char* filePath){
   return fin;
 }
 
-int tryToOpenOutputFile(char* fileName){
+int deschidereFOutput(char* fileName){
   int fout;
   char buffer[BUFFSIZE];
   sprintf(buffer, "%s", fileName);
 
   if((fout = open(buffer, O_WRONLY | O_TRUNC | O_CREAT,S_IRWXU)) == -1 ){
-    perror("Error at creating the output file");
+    perror("Eroare la crearea fișierului de ieșire");
     exit(14);
   }
   return fout;
 }
 
-uint32_t getWidthOfBMPFile(int fin){
+uint32_t latimeBMP(int fin){
   off_t offset = 18;
   uint32_t width;
   lseek(fin, offset, SEEK_SET);
@@ -91,7 +86,7 @@ uint32_t getWidthOfBMPFile(int fin){
   return width;
 }
 
-uint32_t getHeigthOfBMPFile(int fin){
+uint32_t inaltimeBMP(int fin){
   off_t offset = 22;
   uint32_t heigth;
   lseek(fin, offset, SEEK_SET);
@@ -99,19 +94,19 @@ uint32_t getHeigthOfBMPFile(int fin){
   return heigth;
 }
 
-uint32_t getSizeOfFile(struct stat file_info){
+uint32_t dimensiuneFisier(struct stat file_info){
   off_t size = file_info.st_size;
   return size;
 }
 
 void printToX(int fout, char* buffer, int r){
    if((write(fout, buffer, r))<0){
-    perror("Can not write in file");
+    perror("Nu se poate scrie în fișier");
     exit(15);
   }
 }
 
-void printLastModifiedTime(struct stat file_info, int fout){
+void afisareTimpulUltimeiModificari(struct stat file_info, int fout){
   char time_str[20], buffer[BUFFSIZE];
   strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", localtime(&file_info.st_mtime));
   sprintf(buffer, "timpul ultimei modificari: %s\n", time_str);
@@ -119,11 +114,11 @@ void printLastModifiedTime(struct stat file_info, int fout){
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printHeigthAndWidth(int fin, int fout){
+void afisareInaltimeLatime(int fin, int fout){
   uint32_t heigth, width;
   char buffer[BUFFSIZE];
   width = getWidthOfBMPFile(fin);
-  heigth = getHeigthOfBMPFile(fin);
+  heigth = inaltimeBMP(fin);
 
   sprintf(buffer, "inaltime: %d\n", heigth);
   sprintf(buffer + strlen(buffer), "lungime: %d\n", width);
@@ -131,31 +126,31 @@ void printHeigthAndWidth(int fin, int fout){
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printSizeOfFile(int fout, struct stat file_info){
+void afisareDimensiune(int fout, struct stat file_info){
   uint32_t size;
   char buffer[BUFFSIZE];
-  size = getSizeOfFile(file_info);
+  size = dimensiuneFisier(file_info);
 
   sprintf(buffer, "dimensiune: %d\n", size);
 
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printUserID(struct stat file_info, int fout){
+void afisareUserID(struct stat file_info, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "identificatorul utilizatorului: %ld\n", file_info.st_dev);
 
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printLinksCount(struct stat file_info, int fout){
+void afisareNrLinkuri(struct stat file_info, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "contorul de legaturi: %ld\n", file_info.st_nlink);
 
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printUserPermissions(mode_t sMode, int fout){
+void afisareDrepturiAccesUser(mode_t sMode, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "drepturi de acces user: ");
   sprintf(buffer + strlen(buffer), (sMode & S_IRUSR) ? "r" : "-");
@@ -165,7 +160,7 @@ void printUserPermissions(mode_t sMode, int fout){
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printGroupPermissions(mode_t sMode, int fout){
+void afisareDrepturiAccesGrup(mode_t sMode, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "drepturi de acces grup: ");
   sprintf(buffer + strlen(buffer), (sMode & S_IRGRP) ? "r" : "-");
@@ -175,7 +170,7 @@ void printGroupPermissions(mode_t sMode, int fout){
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printOthersPermissions(mode_t sMode, int fout){
+void afisareDrepturiAccesAltii(mode_t sMode, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "drepturi de acces altii: ");
   sprintf(buffer + strlen(buffer), (sMode & S_IROTH) ? "r" : "-");
@@ -185,78 +180,73 @@ void printOthersPermissions(mode_t sMode, int fout){
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printFileName(char* filePath, int fout){
+void afisareNumeFisier(char* filePath, int fout){
   char buffer[BUFFSIZE];
   sprintf(buffer, "nume fisier: %s\n", filePath);
 
   printToX(fout, buffer, strlen(buffer));
 }
 
-void printBMPInfo(char* filePath, int fin, struct stat file_info, mode_t sMode, int fout){
-  printFileName(filePath, fout);
-  printHeigthAndWidth(fin, fout);
-  printSizeOfFile(fout, file_info);
-  printUserID(file_info, fout);
-  printLastModifiedTime(file_info, fout);
-  printLinksCount(file_info, fout);
-  printUserPermissions(sMode, fout);
-  printGroupPermissions(sMode, fout);
-  printOthersPermissions(sMode, fout);
+void afisareBMPInfo(char* filePath, int fin, struct stat file_info, mode_t sMode, int fout){
+  afisareNumeFisier(filePath, fout);
+  afisareInaltimeLatime(fin, fout);
+  afisareDimensiune(fout, file_info);
+  afisareUserID(file_info, fout);
+  afisareTimpulUltimeiModificari(file_info, fout);
+  afisareNrLinkuri(file_info, fout);
+  afisareDrepturiAccesUser(sMode, fout);
+  afisareDrepturiAccesGrup(sMode, fout);
+  afisareDrepturiAccesAltii(sMode, fout);
 }
 
-void printRegFileInfo(char* filePath, struct stat file_info, mode_t sMode, int fout){
-  printFileName(filePath, fout);
-  printSizeOfFile(fout, file_info);
-  printUserID(file_info, fout);
-  printLastModifiedTime(file_info, fout);
-  printLinksCount(file_info, fout);
-  printUserPermissions(sMode, fout);
-  printGroupPermissions(sMode, fout);
-  printOthersPermissions(sMode, fout);
+void afisareFisierObisnuit(char* filePath, struct stat file_info, mode_t sMode, int fout){
+  afisareNumeFisier(filePath, fout);
+  afisareDimensiune(fout, file_info);
+  afisareUserID(file_info, fout);
+  afisareTimpulUltimeiModificari(file_info, fout);
+  afisareNrLinkuri(file_info, fout);
+  afisareDrepturiAccesUser(sMode, fout);
+  afisareDrepturiAccesGrup(sMode, fout);
+  afisareDrepturiAccesAltii(sMode, fout);
 }
 
-void printDirInfo(char* filePath, struct stat file_info, mode_t sMode, int fout){
-  printFileName(filePath, fout);
-  printUserID(file_info, fout);
-  printUserPermissions(sMode, fout);
-  printGroupPermissions(sMode, fout);
-  printOthersPermissions(sMode, fout);
+void afisareDirInfo(char* filePath, struct stat file_info, mode_t sMode, int fout){
+  afisareNumeFisier(filePath, fout);
+  afisareUserID(file_info, fout);
+  afisareDrepturiAccesUser(sMode, fout);
+  afisareDrepturiAccesGrup(sMode, fout);
+  afisareDrepturiAccesAltii(sMode, fout);
 }
 
-//
-void printSymbLinkInfo(char* filePath, struct stat file_info, mode_t sMode, int fout){
-  printFileName(filePath, fout);
+void afisareSymbLink(char* filePath, struct stat file_info, mode_t sMode, int fout){
+  afisareNumeFisier(filePath, fout);
    struct stat tmp;
   if(stat(filePath, &tmp) != 0){
-    perror("Can't get info about the provided file");
+    perror("Nu pot obține informații despre fișierul furnizat");
     exit(11);
   }
-  printSizeOfFile(fout, file_info);
+  afisareDimensiune(fout, file_info);
   char buffer[BUFFSIZE];
   sprintf(buffer, "Fisier target: ");
   printToX(fout, buffer, strlen(buffer));
-  printSizeOfFile(fout, tmp);
-  printUserPermissions(sMode, fout);
-  printGroupPermissions(sMode, fout);
-  printOthersPermissions(sMode, fout);
+  afisareDimensiune(fout, tmp);
+  afisareDrepturiAccesUser(sMode, fout);
+  afisareDrepturiAccesGrup(sMode, fout);
+  afisareDrepturiAccesAltii(sMode, fout);
 }
-//
 
 void duplicateBMP(int fin, char* filePath){
   int fout, r;
-  fout = tryToOpenOutputFile(filePath);
+  fout = deschidereFOutput(filePath);
   char buffer[BUFFSIZE];
-
   lseek(fin, 0, SEEK_SET);
-
   while((r = read(fin, buffer, 8)) > 0){
     printToX(fout, buffer, r);
   }
-
   close(fout);
 }
 
-void convertToGrayscaleOver8(int fin){
+void convertesteLaGriPeste8(int fin){
   off_t offset = 10;
   uint32_t bytesBeforeRasterData;
   char buffer[BUFFSIZE];
@@ -276,13 +266,13 @@ void convertToGrayscaleOver8(int fin){
 
     lseek(fin, -3, SEEK_CUR);
     if((write(fin, buffer, 3))<0){
-      perror("Can not write in file");
+      perror("Nu se poate scrie în fișier");
       exit(15);
     }
   }
 }
 
-void convertToGrayscaleUnder8(int fin, int bitCount){
+void convertesteLaGriSub8(int fin, int bitCount){
   off_t offset = 54;
   char buffer[BUFFSIZE];
   int i=0;
@@ -300,37 +290,37 @@ void convertToGrayscaleUnder8(int fin, int bitCount){
 
     lseek(fin, -4, SEEK_CUR);
     if((write(fin, buffer, 3))<0){
-      perror("Can not write in file");
+      perror("Nu se poate scrie în fișier");
       exit(15);
     }
     lseek(fin, 1, SEEK_CUR);
   }
 }
 
-void convertToGrayscale(char* filePath){
+void convertesteLaGri(char* filePath){
   off_t offset = 28;
   uint16_t bitCount;
 
   int fin;
   if((fin = open(filePath, O_RDWR)) < 0){
-    perror("Input file can not be opened!");
+    perror("Fișierul de intrare nu poate fi deschis!");
     exit(13);
   }
 
   lseek(fin, offset, SEEK_SET);
   read(fin, &bitCount, sizeof(uint16_t));
   if(bitCount > 8){
-    convertToGrayscaleOver8(fin);
+    convertesteLaGriPeste8(fin);
   }
   else{
-    convertToGrayscaleUnder8(fin, bitCount);
+    convertesteLaGriSub8(fin, bitCount);
   }
 
   close(fin);
-  printf("BMP file converted to grayscale successfully.\n");
+  printf("Fișier BMP convertit cu succes în tonuri de gri.\n");
 }
 
-void extractFilePath(char* filePath, char* buffer){
+void extractFisierPath(char* filePath, char* buffer){
   for(int i=0; i<strlen(filePath); i++){
     if(filePath[i] == '/'){
       for(int j=0; j<strlen(filePath)-i; j++){
@@ -340,105 +330,219 @@ void extractFilePath(char* filePath, char* buffer){
   }
 }
 
-int printFileInfo(char* filePath, char* outputPath){
-  int fin, fout, numberOfLinesWritten=0;
-  struct stat file_info;
-  mode_t sMode;
-  char outputName[BUFFSIZE], buffer[BUFFSIZE-50];
-
-  file_info = getFileInfo(filePath, file_info);
-  sMode = file_info.st_mode;
-  fin = tryToOpenFile(filePath);
-
-  extractFilePath(filePath, buffer);
-  sprintf(outputName, "%s/%s_statistica.txt",outputPath, buffer);
-  fout = tryToOpenOutputFile(outputName);
-
-  int type = getFileType(sMode, fin);
-  if(type == 1){
-    char buffer1[BUFFSIZE];
-    sprintf(buffer1, "%s/%s_duplicate.bmp",outputPath, buffer);
-    duplicateBMP(fin, buffer1);
-    convertToGrayscale(buffer1);
-    
-    printBMPInfo(filePath, fin, file_info, sMode, fout);
-    numberOfLinesWritten = 10;
-  }
-  else if(type == 0){
-    printRegFileInfo(filePath, file_info, sMode, fout);
-    numberOfLinesWritten = 8;
-  }
-  else if(type == 2){
-    printDirInfo(filePath, file_info, sMode, fout);
-    numberOfLinesWritten = 5;
-  }
-  else if(type == 3){
-    printSymbLinkInfo(filePath, file_info, sMode, fout);
-    numberOfLinesWritten = 6;
-  }
-  else{};
-
-  close(fout);
-  close(fin);
-  return numberOfLinesWritten;
-}
-
-
-DIR *tryToOpenDir(char* dirPath){
+DIR *deschidereDir(char* dirPath){
   DIR *tmp;
   if((tmp = opendir(dirPath)) == NULL){
-    perror("Directory path does not exist!");
+    perror("Calea directorului nu există!");
     exit(20);
   }
   return tmp;
 }
 
-//
-void crossDir(DIR* dir_path, char *dir_name, int argc, char* dirOut_path){
+char *readFile(const char *filename) {
+    int fileDescriptor = open(filename, O_RDONLY);
+    if (fileDescriptor == -1) {
+        perror("Eroare la deschiderea fișierului");
+        return NULL;
+    }
+
+    //dimensiunea fișierului
+    off_t fileSize = lseek(fileDescriptor, 0, SEEK_END);
+    lseek(fileDescriptor, 0, SEEK_SET);  // Derulează înapoi la început
+
+    // Alocarea de memorie pentru conținutul fișierului
+    char *content = (char *)malloc(fileSize + 1);  //+1 pentru terminatorul nul
+    if (content == NULL) {
+        perror("Eroare de alocare a memoriei pentru conținutul fișierului");
+        close(fileDescriptor);
+        return NULL;
+    }
+
+    // Citiți conținutul fișierului
+    ssize_t bytesRead = read(fileDescriptor, content, fileSize);
+    if (bytesRead != fileSize) {
+        perror("Error reading file");
+        free(content);
+        close(fileDescriptor);
+        return NULL;
+    }
+
+    // Terminare nulă a conținutului
+    content[fileSize] = '\0';
+
+    close(fileDescriptor);
+    return content;
+}
+
+void crossDir(DIR* dir_path, char *dir_name, char* dirOut_path, char* character){
   struct dirent *dir_entry;
-  int pid[LIMITPROCESS], i=0, numberOfLinesWritten;
-  checkNrOfArguments(argc);
+  struct stat file_info;
+  mode_t sMode;
+  int pid, pid2, numberOfLinesWritten=0, fin, fout, sum=0;
 
   while((dir_entry = readdir(dir_path)) != NULL){
-    char entry_path[BUFFSIZE], output_path[BUFFSIZE];
+    char entry_path[BUFFSIZE];
+    char outputName[BUFFSIZE];
     sprintf(entry_path, "%s/%s", dir_name, dir_entry->d_name);
-    sprintf(output_path, "%s/%s", dir_name, dir_entry->d_name);
-    if((pid[i] = fork()) < 0){
-      perror("Ops, it looks like we can't create the process!");
-      exit(errno);
-    }
-    if(pid[i] == 0){
-      numberOfLinesWritten = printFileInfo(entry_path, dirOut_path);
-      exit(numberOfLinesWritten);
+    fin = deschidereFisier(entry_path);
+    sprintf(outputName, "%s/%s_statistica.txt",dirOut_path, dir_entry->d_name);
+    fout = deschidereFOutput(outputName);
+
+    file_info = getInfoFisier(entry_path, file_info);
+    sMode = file_info.st_mode;
+    int type = getTipFisier(sMode, fin);
+
+    if(type == 1){
+      if((pid = fork()) < 0){
+        perror("nu putem crea procesul!");
+        exit(errno);
+      }
+      if(pid == 0){
+        //this process will make the statistics file
+        numberOfLinesWritten = 10;
+        afisareBMPInfo(entry_path, fin, file_info, sMode, fout);
+        exit(numberOfLinesWritten);
+      }
+      else{
+        if((pid2 = fork()) < 0){
+          perror("nu putem crea procesul");
+          exit(errno);
+        }
+        if(pid2 == 0){
+          //acesta este cel de-al doilea proces și va face un duplicat al BMP și apoi îl va converti în tonuri de gri.
+          char buffer1[2*BUFFSIZE];
+          sprintf(buffer1, "%s/%s_duplicate.bmp",dirOut_path, dir_entry->d_name);
+          int fin2 = deschidereFisier(entry_path);
+          duplicateBMP(fin2, buffer1);
+          convertesteLaGri(buffer1);
+          exit(0);
+        }
+      }
     }
 
-    i++;
-  }
+    else if (type == 0) {
+    int son1_to_son2[2], son2_to_parent[2];
+
+    // Create pipes
+    if (pipe(son1_to_son2) == -1 || pipe(son2_to_parent) == -1) {
+        perror("Eroare la crearea pipes");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((pid = fork()) < 0) {
+        perror("Eroare de bifurcare a procesului fiu1");
+        exit(errno);
+    }
+
+    if (pid == 0) {
+        // Cod pentru fiu1
+        close(son1_to_son2[0]);
+        close(son2_to_parent[0]);
+        close(son2_to_parent[1]);
+
+        numberOfLinesWritten = 8;
+        afisareFisierObisnuit(entry_path, file_info, sMode, fout);
+
+        char *fileContent;
+        fileContent = readFile(entry_path);
+
+        write(son1_to_son2[1], fileContent, strlen(fileContent) + 1);
+        free(fileContent);
+        // Close the write end of the pipe_son1_to_son2
+        close(son1_to_son2[1]);
+
+        exit(numberOfLinesWritten);
+    } else {
+        if ((pid2 = fork()) < 0) {
+            perror("Eroare de bifurcare a procesului fiu2");
+            exit(errno);
+        }
+
+        if (pid2 == 0) {
+            
+            close(son1_to_son2[1]);
+            close(son2_to_parent[0]);
+
+            dup2(son1_to_son2[0], 0);
+            close(son1_to_son2[0]);
+
+            dup2(son2_to_parent[1], 1);
+            close(son2_to_parent[1]);
+
+            execlp("/home/faby/OSProject/OS-Project/checkLine.sh", "/home/faby/OSProject/OS-Project/checkLine.sh", character, NULL);
+            perror("Error executing checkLine.sh script");
+            exit(-1);
+        }
+
+        close(son1_to_son2[0]);
+        close(son1_to_son2[1]);
+        close(son2_to_parent[1]);
+
+        char buffer_parent[256];
+        int number_from_buffer;
+        int n = read(son2_to_parent[0], buffer_parent, sizeof(buffer_parent));
+        buffer_parent[n] = '\0';
+        number_from_buffer = atoi(buffer_parent);
+        close(son2_to_parent[0]);
+
+        printf("Parent process has finished.\n");
+        sum = sum + number_from_buffer;
+
+    }
+
+    close(fout);
+    close(fin);
+}
+
+    else if(type == 2){
+      if((pid = fork()) < 0){
+        perror("nu putem crea procesul!");
+        exit(errno);
+      }
+      if(pid == 0){
+        numberOfLinesWritten = 5;
+        afisareDirInfo(entry_path, file_info, sMode, fout);
+        exit(numberOfLinesWritten);
+      }
+    }
+    else if(type == 3){
+      if((pid = fork()) < 0){
+        perror("nu putem crea procesul!");
+        exit(errno);
+      }
+      if(pid == 0){
+        numberOfLinesWritten = 6;
+        afisareSymbLink(entry_path, file_info, sMode, fout);
+        exit(numberOfLinesWritten);
+      }
+    }
+    else{};
+
+    close(fout);
+    close(fin);    
+  } 
 
   int status;
-  for(int j=0; j<i; j++){
-    int fiu = wait(&status);
-    if(fiu < 0){
-      perror("..");
-      exit(errno);
-    }
+  int fiu;
+  while((fiu = wait(&status)) > 0){
     if(WIFEXITED(status)){
       printf("S-a incheiat procesul cu pid-ul %d si codul %d\n", fiu, WEXITSTATUS(status));
     }
   }
 
+   printf("Au fost identificate in total %d propozitii corecte care contin caracterul %s\n", sum, character);
   closedir(dir_path);
 }
-//
+
 
 int main(int argc, char* argv[]){
 
-checkNrOfArguments(argc);
+verificaNrArg(argc);
 
 DIR *dir_path;
-dir_path = tryToOpenDir(argv[1]);
-tryToOpenDir(argv[2]);
-crossDir(dir_path, argv[1], argc, argv[2]);
+dir_path = deschidereDir(argv[1]);
+deschidereDir(argv[2]);
+crossDir(dir_path, argv[1], argv[2], argv[3]);
 
 return 0;
 }
