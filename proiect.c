@@ -117,7 +117,7 @@ void afisareTimpulUltimeiModificari(struct stat file_info, int fout){
 void afisareInaltimeLatime(int fin, int fout){
   uint32_t heigth, width;
   char buffer[BUFFSIZE];
-  width = getWidthOfBMPFile(fin);
+  width = latimeBMP(fin);
   heigth = inaltimeBMP(fin);
 
   sprintf(buffer, "inaltime: %d\n", heigth);
@@ -469,7 +469,7 @@ void crossDir(DIR* dir_path, char *dir_name, char* dirOut_path, char* character)
             dup2(son2_to_parent[1], 1);
             close(son2_to_parent[1]);
 
-            execlp("/home/faby/OSProject/OS-Project/checkLine.sh", "/home/faby/OSProject/OS-Project/checkLine.sh", character, NULL);
+            execlp("C:\Users\Balint Patricia\Desktop\SO-proiect\script.sh", "C:\Users\Balint Patricia\Desktop\SO-proiect\script.sh", character, NULL);
             perror("Error executing checkLine.sh script");
             exit(-1);
         }
